@@ -13,7 +13,7 @@ import {
   Wifi,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 
 type NetworkType = "5G" | "4G" | "3G" | "2G" | "Unknown";
 type ConnectionType = "WiFi" | "Cellular" | "None";
@@ -28,9 +28,43 @@ const HomeScreen = () => {
   const [changesDetected, setChangesDetected] = useState(0);
   const [sessionMinutes, setSessionMinutes] = useState(0);
 
+  // Legacy Android-only permission request (not needed anymore with expo-cellular)
+  /* function below --->
+  const requestPhoneStatePermission = async () => {
+    if (Platform.OS === "android") {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+        {
+          title: "Phone State Permission",
+          message:
+            "We need access to your phone's network state to monitor network connectivity.",
+          buttonPositive: "OK",
+          buttonNegative: "Cancel",
+        }
+      );
+
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+
+    return true; 
+  };
+  */
+
+  const requestPhoneStatePermission = async () => {
+    const { status } = await Cellular.getPermissionsAsync();
+
+    if (status === "granted") {
+      return true;
+    }
+
+    const { status: requestStatus } = await Cellular.requestPermissionsAsync();
+    return requestStatus === "granted";
+  };
+
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     let startTime: number;
+    let hasInitialized = false;
 
     const checkNetwork = async () => {
       const network = await Network.getNetworkStateAsync();
@@ -62,15 +96,18 @@ const HomeScreen = () => {
           newNetworkType = "Unknown";
       }
 
+      // Only count changes after the first run
       if (
-        newConnectionType !== connectionType ||
-        newNetworkType !== networkType
+        hasInitialized &&
+        (newConnectionType !== connectionType || newNetworkType !== networkType)
       ) {
         setChangesDetected((prev) => prev + 1);
       }
 
       setConnectionType(newConnectionType);
       setNetworkType(newNetworkType);
+
+      hasInitialized = true;
     };
 
     if (isMonitoring) {
@@ -115,7 +152,21 @@ const HomeScreen = () => {
       <View className="items-center justify-center max-h-52 flex-1">
         <MonitorButton
           isMonitoring={isMonitoring}
-          onToggle={() => {
+          onToggle={async () => {
+            if (!isMonitoring) {
+              const hasPermission = await requestPhoneStatePermission();
+              if (!hasPermission) {
+                Alert.alert(
+                  "Permission Denied",
+                  "We cannot monitor network status without permission."
+                );
+                return;
+              }
+            } else {
+              setConnectionType("None");
+              setNetworkType("Unknown");
+            }
+
             setIsMonitoring((prev) => !prev);
             setChangesDetected(0);
             setSessionMinutes(0);
