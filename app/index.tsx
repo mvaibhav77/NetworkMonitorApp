@@ -3,7 +3,19 @@ import { MonitorButton } from "@/components/MonitorButton";
 import { MonitoringStatus } from "@/components/MonitoringStatus";
 import { SessionStats } from "@/components/SessionStats";
 import { StatusCard } from "@/components/StatusCard";
-import { useTheme } from "@/context/ThemeProvider";
+import {
+  clearMonitorInitializedFlag,
+  getMonitorInitializedFlag,
+  setMonitorInitializedFlag,
+} from "@/store/flagStore";
+import { addChange } from "@/store/historyStore";
+import {
+  ConnectionType,
+  NetworkChange,
+  NetworkType,
+} from "@/types/NetworkChange";
+import { sendNetworkChangeNotification } from "@/utils/sendNotification";
+import { useTheme } from "@/utils/ThemeProvider";
 import { useNavigation } from "@react-navigation/native";
 import * as Cellular from "expo-cellular";
 import * as Network from "expo-network";
@@ -14,9 +26,7 @@ import {
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
-
-type NetworkType = "5G" | "4G" | "3G" | "2G" | "Unknown";
-type ConnectionType = "WiFi" | "Cellular" | "None";
+import uuid from "react-native-uuid";
 
 const HomeScreen = () => {
   const { theme } = useTheme();
@@ -64,7 +74,6 @@ const HomeScreen = () => {
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     let startTime: number;
-    let hasInitialized = false;
 
     const checkNetwork = async () => {
       const network = await Network.getNetworkStateAsync();
@@ -96,18 +105,39 @@ const HomeScreen = () => {
           newNetworkType = "Unknown";
       }
 
-      // Only count changes after the first run
+      const hasInitialized = await getMonitorInitializedFlag();
+
       if (
         hasInitialized &&
         (newConnectionType !== connectionType || newNetworkType !== networkType)
       ) {
+        const id = uuid.v4();
         setChangesDetected((prev) => prev + 1);
+
+        console.log("CHANGE DETECTED");
+
+        const from =
+          connectionType === "Cellular" ? networkType : connectionType;
+        const to =
+          newConnectionType === "Cellular" ? newNetworkType : newConnectionType;
+
+        const change: NetworkChange = {
+          id,
+          from,
+          to,
+          timestamp: new Date().toISOString(),
+        };
+
+        await addChange(change);
+        await sendNetworkChangeNotification(from, to);
       }
 
       setConnectionType(newConnectionType);
       setNetworkType(newNetworkType);
 
-      hasInitialized = true;
+      if (!hasInitialized) {
+        await setMonitorInitializedFlag();
+      }
     };
 
     if (isMonitoring) {
@@ -118,6 +148,8 @@ const HomeScreen = () => {
         const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
         setSessionMinutes(Math.floor(elapsedSeconds / 60));
       }, 6000);
+    } else {
+      clearMonitorInitializedFlag(); // reset when monitoring stops
     }
 
     return () => clearInterval(interval);
@@ -163,6 +195,7 @@ const HomeScreen = () => {
                 return;
               }
             } else {
+              await clearMonitorInitializedFlag();
               setConnectionType("None");
               setNetworkType("Unknown");
             }

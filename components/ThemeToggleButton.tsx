@@ -1,6 +1,6 @@
 import { Moon, Sun } from "lucide-react-native";
 import { Pressable } from "react-native";
-import { useTheme } from "../context/ThemeProvider";
+import { useTheme } from "../utils/ThemeProvider";
 
 export function ThemeToggleButton() {
   const { theme, toggleTheme } = useTheme();

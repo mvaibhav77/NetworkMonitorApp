@@ -1,4 +1,4 @@
-import { useTheme } from "@/context/ThemeProvider";
+import { useTheme } from "@/utils/ThemeProvider";
 import { Text, View } from "react-native";
 
 interface Props {
