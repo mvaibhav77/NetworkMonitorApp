@@ -1,42 +1,20 @@
 import { Link } from "expo-router";
 import { History } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import React from "react";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type NetworkType = "5G" | "4G" | "3G" | "2G";
 type ConnectionType = "WiFi" | "Cellular" | "None";
 
 const HomeScreen = () => {
-  const [isMonitoring, setIsMonitoring] = useState(false);
-  const [networkType, setNetworkType] = useState<NetworkType>("5G");
-  const [connectionType, setConnectionType] = useState<ConnectionType>("WiFi");
-
-  useEffect(() => {
-    if (!isMonitoring) return;
-
-    const interval = setInterval(() => {
-      if (Math.random() < 0.1) {
-        const types: NetworkType[] = ["5G", "4G", "3G", "2G"];
-        setNetworkType(types[Math.floor(Math.random() * types.length)]);
-      }
-      if (Math.random() < 0.05) {
-        const connections: ConnectionType[] = ["WiFi", "Cellular"];
-        setConnectionType(
-          connections[Math.floor(Math.random() * connections.length)]
-        );
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [isMonitoring]);
 
   return (
     <SafeAreaView className={`flex-1 justify-center items-center`}>
-      <ScrollView className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-6">
+      <View className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-6">
         {/* Header */}
         <View className="items-center mb-8">
-          <Text className="text-3xl font-bold text-slate-800 mb-1">
+          <Text className="text-4xl font-semibold text-slate-800 mb-1 dark:text-white">
             Network Monitor
           </Text>
           <Text className="text-slate-600">
@@ -60,7 +38,7 @@ const HomeScreen = () => {
             View Network History
           </Text>
         </Link>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };

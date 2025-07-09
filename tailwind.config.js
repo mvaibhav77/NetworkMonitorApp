@@ -4,7 +4,14 @@ module.exports = {
   content: ["./app/**/*", "./components/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["PoppinsRegular"],
+        bold: ["PoppinsBold"],
+        light: ["PoppinsLight"],
+        semibold: ["PoppinsSemiBold"],
+      },
+    },
   },
   plugins: [],
   darkMode: "class", // Enable dark mode support

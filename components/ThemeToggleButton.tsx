@@ -8,7 +8,7 @@ export function ThemeToggleButton() {
   return (
     <Pressable
       onPress={toggleTheme}
-      className="absolute top-12 right-8 bg-slate-200 dark:bg-slate-800 p-2 rounded-full z-50 shadow-md"
+      className="absolute bottom-12 right-8 bg-slate-200 dark:bg-slate-800 p-2 rounded-full z-50 shadow-lg"
     >
       {theme === "light" ? (
         <Moon size={20} color="#334155" />

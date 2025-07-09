@@ -3,6 +3,7 @@ import {
   DefaultTheme,
   ThemeProvider as NavigationThemeProvider,
 } from "@react-navigation/native";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ThemeToggleButton } from "../components/ThemeToggleButton";
@@ -23,7 +24,6 @@ function LayoutWrapper() {
           <Stack.Screen name="+not-found" />
         </Stack>
 
-        {/* ✅ Safe to use the toggle button here */}
         <ThemeToggleButton />
 
         <StatusBar style={theme === "dark" ? "light" : "dark"} />
@@ -33,6 +33,14 @@ function LayoutWrapper() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+      PoppinsRegular: require("../assets/fonts/Poppins-Regular.ttf"),
+      PoppinsBold: require("../assets/fonts/Poppins-Bold.ttf"),
+      PoppinsLight: require("../assets/fonts/Poppins-Light.ttf"),
+      PoppinsSemiBold: require("../assets/fonts/Poppins-SemiBold.ttf"),
+    });
+  
+    if (!fontsLoaded) return null;
   return (
     <ThemeProvider>
       <LayoutWrapper />
