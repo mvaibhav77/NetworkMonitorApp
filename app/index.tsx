@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { History } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type NetworkType = "5G" | "4G" | "3G" | "2G";
 type ConnectionType = "WiFi" | "Cellular" | "None";
@@ -31,34 +32,36 @@ const HomeScreen = () => {
   }, [isMonitoring]);
 
   return (
-    <ScrollView className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-6">
-      {/* Header */}
-      <View className="items-center mb-8">
-        <Text className="text-3xl font-bold text-slate-800 mb-1">
-          Network Monitor
-        </Text>
-        <Text className="text-slate-600">
-          Monitor your network connectivity in real-time
-        </Text>
-      </View>
+    <SafeAreaView className={`flex-1 justify-center items-center`}>
+      <ScrollView className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-6">
+        {/* Header */}
+        <View className="items-center mb-8">
+          <Text className="text-3xl font-bold text-slate-800 mb-1">
+            Network Monitor
+          </Text>
+          <Text className="text-slate-600">
+            Monitor your network connectivity in real-time
+          </Text>
+        </View>
 
-      {/* Status Cards */}
+        {/* Status Cards */}
 
-      {/* Monitoring Status */}
+        {/* Monitoring Status */}
 
-      {/* Toggle Button */}
+        {/* Toggle Button */}
 
-      {/* Navigation to History */}
-      <Link
-        href="/history"
-        className="flex-row items-center justify-center h-12 bg-white/80 border border-slate-200 rounded-lg"
-      >
-        <History size={20} color="#334155" className="mr-2" />
-        <Text className="text-base text-red-800 font-medium">
-          View Network History
-        </Text>
-      </Link>
-    </ScrollView>
+        {/* Navigation to History */}
+        <Link
+          href="/history"
+          className="flex-row items-center justify-center h-12 bg-white/80 border border-slate-200 rounded-lg"
+        >
+          <History size={20} color="#334155" className="mr-2" />
+          <Text className="text-base text-red-800 font-medium">
+            View Network History
+          </Text>
+        </Link>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

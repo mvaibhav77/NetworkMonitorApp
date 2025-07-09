@@ -1,25 +1,41 @@
-import { useFonts } from "expo-font";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import "react-native-gesture-handler";
-import "react-native-reanimated";
+import { ThemeToggleButton } from "../components/ThemeToggleButton";
+import { ThemeProvider, useTheme } from "../context/ThemeProvider";
 import "./global.css";
 
-export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
-
-  if (!fontsLoaded) return null;
+function LayoutWrapper() {
+  const { theme } = useTheme();
 
   return (
-    <>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="history" options={{ title: "History" }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </>
+    <NavigationThemeProvider
+      value={theme === "dark" ? DarkTheme : DefaultTheme}
+    >
+      <>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="history" options={{ title: "Network History" }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+
+        {/* ✅ Safe to use the toggle button here */}
+        <ThemeToggleButton />
+
+        <StatusBar style={theme === "dark" ? "light" : "dark"} />
+      </>
+    </NavigationThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <LayoutWrapper />
+    </ThemeProvider>
   );
 }
