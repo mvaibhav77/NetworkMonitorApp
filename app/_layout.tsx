@@ -12,7 +12,19 @@ import { useEffect } from "react";
 import { Alert } from "react-native";
 import { ThemeToggleButton } from "../components/ThemeToggleButton";
 import { ThemeProvider, useTheme } from "../utils/ThemeProvider";
+import { setupAndroidNotificationChannel } from "../utils/notificationChannel";
+
 import "./global.css";
+
+// Set how notifications behave when received while app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowList: true,
+  }),
+});
 
 function LayoutWrapper() {
   const { theme } = useTheme();
@@ -32,7 +44,6 @@ function LayoutWrapper() {
         </Stack>
 
         <ThemeToggleButton />
-
         <StatusBar style={theme === "dark" ? "light" : "dark"} />
       </>
     </NavigationThemeProvider>
@@ -40,17 +51,8 @@ function LayoutWrapper() {
 }
 
 export default function RootLayout() {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
-
   useEffect(() => {
-    async function registerForPushNotificationsAsync() {
+    async function registerForNotifications() {
       if (Device.isDevice) {
         const { status: existingStatus } =
           await Notifications.getPermissionsAsync();
@@ -62,14 +64,16 @@ export default function RootLayout() {
         }
 
         if (finalStatus !== "granted") {
-          Alert.alert("Notification permission not granted");
+          Alert.alert("Permission not granted", "Notifications will not work.");
+          return;
         }
       } else {
         console.warn("Must use physical device for notifications");
       }
     }
 
-    registerForPushNotificationsAsync();
+    registerForNotifications();
+    setupAndroidNotificationChannel();
   }, []);
 
   const [fontsLoaded] = useFonts({
