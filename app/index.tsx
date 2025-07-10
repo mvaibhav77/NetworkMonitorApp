@@ -3,19 +3,9 @@ import { MonitorButton } from "@/components/MonitorButton";
 import { MonitoringStatus } from "@/components/MonitoringStatus";
 import { SessionStats } from "@/components/SessionStats";
 import { StatusCard } from "@/components/StatusCard";
-import {
-  clearMonitorInitializedFlag,
-  getMonitorInitializedFlag,
-  setMonitorInitializedFlag,
-} from "@/store/flagStore";
-import { addChange } from "@/store/historyStore";
-import {
-  ConnectionType,
-  NetworkChange,
-  NetworkType,
-} from "@/types/NetworkChange";
-import { getResolvedNetworkInfo } from "@/utils/getNetworkInfo";
-import { sendNetworkChangeNotification } from "@/utils/sendNotification";
+import { clearMonitorInitializedFlag } from "@/store/flagStore";
+import { ConnectionType, NetworkType } from "@/types/NetworkChange";
+import { monitorNetworkChange } from "@/utils/monitorNetworkChange";
 import { useTheme } from "@/utils/ThemeProvider";
 import { useNavigation } from "@react-navigation/native";
 import * as Cellular from "expo-cellular";
@@ -26,7 +16,6 @@ import {
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
-import uuid from "react-native-uuid";
 
 const HomeScreen = () => {
   const { theme } = useTheme();
@@ -60,6 +49,17 @@ const HomeScreen = () => {
   };
   */
 
+  const requestPhoneStatePermission = async () => {
+    const { status } = await Cellular.getPermissionsAsync();
+
+    if (status === "granted") {
+      return true;
+    }
+
+    const { status: requestStatus } = await Cellular.requestPermissionsAsync();
+    return requestStatus === "granted";
+  };
+
   const handleToggleMonitoring = async () => {
     if (!isMonitoring) {
       const hasPermission = await requestPhoneStatePermission();
@@ -81,64 +81,18 @@ const HomeScreen = () => {
     setSessionMinutes(0);
   };
 
-  const requestPhoneStatePermission = async () => {
-    const { status } = await Cellular.getPermissionsAsync();
-
-    if (status === "granted") {
-      return true;
-    }
-
-    const { status: requestStatus } = await Cellular.requestPermissionsAsync();
-    return requestStatus === "granted";
-  };
-
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     let startTime: number;
 
-    const checkNetwork = async () => {
-      const { connectionType: newConnectionType, networkType: newNetworkType } =
-        await getResolvedNetworkInfo();
-
-      const hasInitialized = await getMonitorInitializedFlag();
-
-      if (
-        hasInitialized &&
-        (newConnectionType !== connectionType || newNetworkType !== networkType)
-      ) {
-        /*
-          LOGGING CHANGE DETECTION
-        */
-        console.log("CHANGE DETECTED");
-        console.log(
-          `From: ${connectionType} (${networkType}) To: ${newConnectionType} (${newNetworkType})`
-        );
-
-        const id = uuid.v4();
-        setChangesDetected((prev) => prev + 1);
-
-        const from =
-          connectionType === "Cellular" ? networkType : connectionType;
-        const to =
-          newConnectionType === "Cellular" ? newNetworkType : newConnectionType;
-
-        const change: NetworkChange = {
-          id,
-          from,
-          to,
-          timestamp: new Date().toISOString(),
-        };
-
-        await addChange(change);
-        await sendNetworkChangeNotification(from, to);
-      }
-
-      setConnectionType(newConnectionType);
-      setNetworkType(newNetworkType);
-
-      if (!hasInitialized) {
-        await setMonitorInitializedFlag();
-      }
+    const checkNetwork = () => {
+      monitorNetworkChange({
+        currentConnectionType: connectionType,
+        currentNetworkType: networkType,
+        setConnectionType,
+        setNetworkType,
+        setChangesDetected,
+      });
     };
 
     if (isMonitoring) {

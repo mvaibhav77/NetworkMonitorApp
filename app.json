@@ -39,7 +39,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "foreground-ss",
+      "./withForegroundService.js"
     ],
     "experiments": {
       "typedRoutes": true
