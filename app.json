@@ -17,7 +17,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": ["READ_PHONE_STATE"]
+      "permissions": [
+        "READ_PHONE_STATE",
+        "FOREGROUND_SERVICE",
+        "POST_NOTIFICATIONS"
+      ],
+      "package": "com.mvaibhav77.NetworkMonitorApp"
     },
     "web": {
       "bundler": "metro",
@@ -38,6 +43,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "db120a99-dccd-44c6-b87b-2a9eff7c0093"
+      }
     }
   }
 }

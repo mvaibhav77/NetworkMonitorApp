@@ -14,11 +14,11 @@ import {
   NetworkChange,
   NetworkType,
 } from "@/types/NetworkChange";
+import { getResolvedNetworkInfo } from "@/utils/getNetworkInfo";
 import { sendNetworkChangeNotification } from "@/utils/sendNotification";
 import { useTheme } from "@/utils/ThemeProvider";
 import { useNavigation } from "@react-navigation/native";
 import * as Cellular from "expo-cellular";
-import * as Network from "expo-network";
 import {
   ChartNoAxesColumnIncreasing,
   History,
@@ -60,6 +60,27 @@ const HomeScreen = () => {
   };
   */
 
+  const handleToggleMonitoring = async () => {
+    if (!isMonitoring) {
+      const hasPermission = await requestPhoneStatePermission();
+      if (!hasPermission) {
+        Alert.alert(
+          "Permission Denied",
+          "We cannot monitor network status without permission."
+        );
+        return;
+      }
+    } else {
+      await clearMonitorInitializedFlag();
+      setConnectionType("None");
+      setNetworkType("Unknown");
+    }
+
+    setIsMonitoring((prev) => !prev);
+    setChangesDetected(0);
+    setSessionMinutes(0);
+  };
+
   const requestPhoneStatePermission = async () => {
     const { status } = await Cellular.getPermissionsAsync();
 
@@ -76,34 +97,8 @@ const HomeScreen = () => {
     let startTime: number;
 
     const checkNetwork = async () => {
-      const network = await Network.getNetworkStateAsync();
-      const cellular = await Cellular.getCellularGenerationAsync();
-
-      const newConnectionType: ConnectionType =
-        network.type === Network.NetworkStateType.WIFI
-          ? "WiFi"
-          : network.type === Network.NetworkStateType.CELLULAR
-            ? "Cellular"
-            : "None";
-
-      let newNetworkType: NetworkType = "Unknown";
-
-      switch (cellular) {
-        case Cellular.CellularGeneration.CELLULAR_5G:
-          newNetworkType = "5G";
-          break;
-        case Cellular.CellularGeneration.CELLULAR_4G:
-          newNetworkType = "4G";
-          break;
-        case Cellular.CellularGeneration.CELLULAR_3G:
-          newNetworkType = "3G";
-          break;
-        case Cellular.CellularGeneration.CELLULAR_2G:
-          newNetworkType = "2G";
-          break;
-        default:
-          newNetworkType = "Unknown";
-      }
+      const { connectionType: newConnectionType, networkType: newNetworkType } =
+        await getResolvedNetworkInfo();
 
       const hasInitialized = await getMonitorInitializedFlag();
 
@@ -111,10 +106,16 @@ const HomeScreen = () => {
         hasInitialized &&
         (newConnectionType !== connectionType || newNetworkType !== networkType)
       ) {
+        /*
+          LOGGING CHANGE DETECTION
+        */
+        console.log("CHANGE DETECTED");
+        console.log(
+          `From: ${connectionType} (${networkType}) To: ${newConnectionType} (${newNetworkType})`
+        );
+
         const id = uuid.v4();
         setChangesDetected((prev) => prev + 1);
-
-        console.log("CHANGE DETECTED");
 
         const from =
           connectionType === "Cellular" ? networkType : connectionType;
@@ -184,26 +185,7 @@ const HomeScreen = () => {
       <View className="items-center justify-center max-h-52 flex-1">
         <MonitorButton
           isMonitoring={isMonitoring}
-          onToggle={async () => {
-            if (!isMonitoring) {
-              const hasPermission = await requestPhoneStatePermission();
-              if (!hasPermission) {
-                Alert.alert(
-                  "Permission Denied",
-                  "We cannot monitor network status without permission."
-                );
-                return;
-              }
-            } else {
-              await clearMonitorInitializedFlag();
-              setConnectionType("None");
-              setNetworkType("Unknown");
-            }
-
-            setIsMonitoring((prev) => !prev);
-            setChangesDetected(0);
-            setSessionMinutes(0);
-          }}
+          onToggle={handleToggleMonitoring}
         />
       </View>
 
